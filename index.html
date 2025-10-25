@@ -5,20 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Quit Timer</title>
 
-  <!-- Tailwind via CDN for a clean, fancy UI (no build needed) -->
+  <!-- Tailwind via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Luxon for precise calendar unit diffs -->
+  <!-- Luxon for accurate date differences -->
   <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 
   <style>
-    /* Subtle glass effect card */
     .glass {
       backdrop-filter: blur(10px);
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.12);
     }
-    /* Smooth digit flip feel */
     .tick { transition: transform .2s ease, opacity .2s ease; will-change: transform, opacity; }
     .tick-enter { transform: translateY(8px); opacity: 0; }
     .tick-show  { transform: translateY(0);   opacity: 1; }
@@ -42,41 +40,29 @@
 
       <!-- Card -->
       <section class="glass rounded-2xl p-6 sm:p-10 shadow-2xl">
-        <!-- Big timer line -->
         <p id="timer"
            class="text-xl sm:text-2xl leading-relaxed font-medium text-slate-100 text-center">
           Loading…
         </p>
 
         <!-- Milestones -->
-        <div class="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div class="rounded-xl p-4 bg-emerald-400/10 ring-1 ring-emerald-400/20">
+        <div class="mt-8 grid grid-cols-2 gap-4">
+          <div class="rounded-xl p-4 bg-emerald-400/10 ring-1 ring-emerald-400/20 text-center">
             <div class="text-sm text-emerald-300">Cigarette-free</div>
             <div id="daysTotal" class="mt-1 text-2xl font-semibold">—</div>
             <div class="text-xs text-slate-400">total days</div>
           </div>
-          <div class="rounded-xl p-4 bg-sky-400/10 ring-1 ring-sky-400/20">
+          <div class="rounded-xl p-4 bg-sky-400/10 ring-1 ring-sky-400/20 text-center">
             <div class="text-sm text-sky-300">Hours</div>
             <div id="hoursTotal" class="mt-1 text-2xl font-semibold">—</div>
             <div class="text-xs text-slate-400">since quitting</div>
           </div>
-          <div class="rounded-xl p-4 bg-fuchsia-400/10 ring-1 ring-fuchsia-400/20">
-            <div class="text-sm text-fuchsia-300">Money saved</div>
-            <div id="moneySaved" class="mt-1 text-2xl font-semibold">—</div>
-            <div class="text-xs text-slate-400">estimation (optional)</div>
-          </div>
         </div>
 
         <!-- Footer -->
-        <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400 text-sm">
-          <div>
-            <span class="mr-2">⏱️ Updates every second</span>
-            <span id="startInfo" class="font-mono text-slate-300"></span>
-          </div>
-          <button id="toggleTheme"
-                  class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition">
-            Toggle theme
-          </button>
+        <div class="mt-8 text-center text-slate-400 text-sm">
+          <span>⏱️ Updates every second — </span>
+          <span id="startInfo" class="font-mono text-slate-300"></span>
         </div>
       </section>
     </div>
@@ -84,28 +70,15 @@
 
   <script>
     (function () {
-      const { DateTime, Duration } = luxon;
+      const { DateTime } = luxon;
 
       const elTitle      = document.getElementById('title');
       const elTimer      = document.getElementById('timer');
       const elDaysTotal  = document.getElementById('daysTotal');
       const elHoursTotal = document.getElementById('hoursTotal');
-      const elMoney      = document.getElementById('moneySaved');
       const elStartInfo  = document.getElementById('startInfo');
-      const btnTheme     = document.getElementById('toggleTheme');
-
-      // Optional money config (edit here if you want):
-      // avg packs/day * price per pack (your currency)
-      const packsPerDay = 1;      // change if needed
-      const pricePerPack = 3.5;   // change if needed
 
       let startDate = null;
-
-      // Simple theme toggle (dark by default)
-      btnTheme.addEventListener('click', () => {
-        document.documentElement.classList.toggle('inverted');
-        document.body.classList.toggle('bg-white');
-      });
 
       function fmt(parts) {
         return `${parts.years} years, ${parts.months} months, ${parts.days} days, ` +
@@ -113,20 +86,18 @@
       }
 
       function calcDiff(now, start) {
-        // Use Luxon to get calendar-accurate units
-        const diff = start.until(now).toDuration(['years','months','days','hours','minutes','seconds']).shiftTo(
-          'years','months','days','hours','minutes','seconds'
-        );
+        const diff = start.until(now)
+          .toDuration(['years','months','days','hours','minutes','seconds'])
+          .shiftTo('years','months','days','hours','minutes','seconds');
 
-        // Floor each unit (seconds rounded down)
-        const years   = Math.floor(diff.years);
-        const months  = Math.floor(diff.months);
-        const days    = Math.floor(diff.days);
-        const hours   = Math.floor(diff.hours);
-        const minutes = Math.floor(diff.minutes);
-        const seconds = Math.floor(diff.seconds);
-
-        return { years, months, days, hours, minutes, seconds };
+        return {
+          years:   Math.floor(diff.years),
+          months:  Math.floor(diff.months),
+          days:    Math.floor(diff.days),
+          hours:   Math.floor(diff.hours),
+          minutes: Math.floor(diff.minutes),
+          seconds: Math.floor(diff.seconds)
+        };
       }
 
       function tick() {
@@ -134,24 +105,16 @@
         const now = DateTime.now();
         const parts = calcDiff(now, startDate);
 
-        // Update main line with a tiny flip effect
         elTimer.classList.add('tick','tick-enter');
         requestAnimationFrame(() => {
           elTimer.textContent = fmt(parts);
-          elTimer.classList.remove('tick-enter'); elTimer.classList.add('tick-show');
+          elTimer.classList.remove('tick-enter');
+          elTimer.classList.add('tick-show');
           setTimeout(() => elTimer.classList.remove('tick','tick-show'), 150);
         });
 
-        // Totals
-        const totalHours = Math.floor(now.diff(startDate, 'hours').hours);
-        const totalDays  = Math.floor(now.diff(startDate, 'days').days);
-
-        elDaysTotal.textContent  = totalDays.toLocaleString();
-        elHoursTotal.textContent = totalHours.toLocaleString();
-
-        // Optional: money saved estimation
-        const money = totalDays * packsPerDay * pricePerPack;
-        elMoney.textContent = money.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        elDaysTotal.textContent  = Math.floor(now.diff(startDate, 'days').days).toLocaleString();
+        elHoursTotal.textContent = Math.floor(now.diff(startDate, 'hours').hours).toLocaleString();
       }
 
       async function loadConfig() {
@@ -161,19 +124,17 @@
           const json = await res.json();
           if (!json.start) throw new Error('Missing "start" field in start-date.json');
 
-          // Parse with Luxon; accept timezone if provided
           startDate = DateTime.fromISO(json.start, { setZone: true });
           if (!startDate.isValid) throw new Error('Invalid ISO date in start-date.json');
 
           if (json.title) elTitle.textContent = json.title;
           elStartInfo.textContent = `Start: ${startDate.toISO({ suppressMilliseconds: true })}`;
 
-          // Start ticking
           tick();
           setInterval(tick, 1000);
         } catch (err) {
           console.error(err);
-          elTimer.textContent = 'Error: could not load start-date.json. Make sure the file exists on your branch.';
+          elTimer.textContent = 'Error: could not load start-date.json. Make sure the file exists.';
         }
       }
 
